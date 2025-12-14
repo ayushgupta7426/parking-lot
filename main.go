@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	parkinggate "parking/internal/entrance"
+	"parking/internal/parkinggate"
 	"parking/internal/parking"
 	"parking/internal/vehicle"
 	"time"

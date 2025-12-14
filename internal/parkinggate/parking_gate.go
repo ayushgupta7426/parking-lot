@@ -33,12 +33,15 @@ func (pg *parkingGate) Park(vehicle vehicle.IVehicle) (*ticket.Ticket, error) {
 	if _, exists := pg.vehicleMap[vehicleNumber]; !exists {
 		pg.vehicleMap[vehicleNumber] = vehicle
 	}
+
 	parkingSpot, err := pg.parkingManager.AssignAvailableSpot(vehicle.VehicleNumber(), vehicle.VehicleType())
 	if err != nil {
 		return nil, fmt.Errorf("failed to assign a parking spot, slot full")
 	}
+
 	ticket := ticket.NewTicket(vehicle, parkingSpot.GetFloor(), parkingSpot.GetId())
 	pg.ticketIdToTicketMap[ticket.TicketID]=ticket
+
 	return ticket, nil
 }
 
@@ -47,14 +50,21 @@ func (pg *parkingGate) Exit(ticketId string, exitTime time.Time) (*ticket.Ticket
 	if ticket == nil {
 		return nil, fmt.Errorf("invalid ticket")
 	}
-	pg.parkingManager.FreeParkingSpot(ticket.VehicleNumber)
+
+	err:=pg.parkingManager.FreeParkingSpot(ticket.VehicleNumber)
+	if err!=nil {
+		return nil, fmt.Errorf("error exiting the vehicle")
+	}
+
 	feeStrategy, err := parkingfees.GetFeeStrategy(ticket.VehicleType)
 	if err != nil {
 		return nil, fmt.Errorf("error Calculating fees, err: %v", err)
 	}
+
 	parkedHours := exitTime.Hour() - ticket.EntryTime.Hour()
 	calculatedFee := feeStrategy.Calculate(parkedHours)
 	ticket.ExitTime = exitTime
 	ticket.Charges = calculatedFee
+
 	return ticket, nil
 }
