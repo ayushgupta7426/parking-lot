@@ -2,31 +2,33 @@ package parking
 
 import (
 	"fmt"
+	"parking/internal/vehicle"
+
 	"github.com/google/uuid"
 )
 
 type IParkingManager interface {
 	Add(vehicleType string, floor int)
 	Remove(parkingSpotId int)
-	AssignAvailableSpot(vehicleId int, vehicleType string) (string, error)
+	AssignAvailableSpot(vehicleId int, vehicleType string) (*parkingSpot, error)
 	FreeParkingSpot(vehicleId int) error
 }
 
 type ParkingManager struct {
 	parkingSpotIdVsPS        map[string]*parkingSpot
-	parkingPerFloorPerType   map[string]map[int][]string
+	parkingPerFloorPerType   map[vehicle.VehicleType]map[int][]string
 	vehicleIdVsParkingSpotId map[string]string
 }
 
 func New() *ParkingManager {
 	return &ParkingManager{
 		parkingSpotIdVsPS:        make(map[string]*parkingSpot),
-		parkingPerFloorPerType:   make(map[string]map[int][]string),
+		parkingPerFloorPerType:   make(map[vehicle.VehicleType]map[int][]string),
 		vehicleIdVsParkingSpotId: make(map[string]string),
 	}
 }
 
-func (ps *ParkingManager) Add(vehicleType string, floor int) {
+func (ps *ParkingManager) Add(vehicleType vehicle.VehicleType, floor int) {
 	id := uuid.New().String()
 	parkingSpot := &parkingSpot{
 		id:          id,
@@ -53,7 +55,7 @@ func (ps *ParkingManager) Remove(parkingSpotId string) {
 	}
 }
 
-func (ps *ParkingManager) AssignAvailableSpot(vehicleId string, vehicleType string) (string, error) {
+func (ps *ParkingManager) AssignAvailableSpot(vehicleNumber string, vehicleType vehicle.VehicleType) (*parkingSpot, error) {
 	availablefloors := ps.parkingPerFloorPerType[vehicleType]
 
 	for _, val := range availablefloors {
@@ -61,12 +63,12 @@ func (ps *ParkingManager) AssignAvailableSpot(vehicleId string, vehicleType stri
 			parkingSpot := ps.parkingSpotIdVsPS[id]
 			if !parkingSpot.isOccupied {
 				parkingSpot.isOccupied = true
-				ps.vehicleIdVsParkingSpotId[vehicleId] = parkingSpot.id
-				return parkingSpot.id, nil
+				ps.vehicleIdVsParkingSpotId[vehicleNumber] = parkingSpot.id
+				return parkingSpot, nil
 			}
 		}
 	}
-	return "", fmt.Errorf("no spot available")
+	return nil, fmt.Errorf("no spot available")
 }
 
 func (ps *ParkingManager) FreeParkingSpot(vehicleId string) error {

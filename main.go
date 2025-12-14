@@ -2,43 +2,43 @@ package main
 
 import (
 	"fmt"
-	parkinggate "parking/service/entrance"
-	"parking/service/parking"
-	"parking/service/vehicle"
+	parkinggate "parking/internal/entrance"
+	"parking/internal/parking"
+	"parking/internal/vehicle"
 	"time"
 )
 
 func main() {
 	parkingManager := parking.New()
-	parkingManager.Add("bike", 4)
-	parkingManager.Add("car", 4)
+	parkingManager.Add(vehicle.BikeType, 4)
+	parkingManager.Add(vehicle.CarType, 4)
 
 	parkkingGate := parkinggate.NewParkingGate(parkingManager)
 	bike := vehicle.NewBike("abc")
 	car := vehicle.NewCar("xyz")
 	// car:=vehicle.NewCar("xyz")
-	err := parkkingGate.CheckIn(bike)
+	ticket, err := parkkingGate.Park(bike)
 	if err != nil {
 		fmt.Printf("failed to checkin, err: %v", err)
 		return
 	}
-	fees, err := parkkingGate.CheckOut("abc", time.Now().Add(5*time.Hour))
+	fees, err := parkkingGate.Exit(ticket.TicketID, time.Now().Add(5*time.Hour))
 	if err != nil {
 		fmt.Printf("failed to checkout take default fees, err: %v", err)
 		return
 	}
 
-	fmt.Printf("total fees: %v\n", fees)
+	fmt.Printf("ticket: %v\n", fees)
 
-	err = parkkingGate.CheckIn(car)
+	ticket2, err := parkkingGate.Park(car)
 	if err != nil {
 		fmt.Printf("failed to checkin, err: %v", err)
 		return
 	}
-	fees1, err := parkkingGate.CheckOut("xyz", time.Now().Add(5*time.Hour))
+	ticket2, err = parkkingGate.Exit(ticket2.TicketID, time.Now().Add(5*time.Hour))
 	if err != nil {
 		fmt.Printf("failed to checkout take default fees, err: %v", err)
 		return
 	}
-	fmt.Printf("total fees: %v\n", fees1)
+	fmt.Printf("ticket: %v\n", ticket2)
 }
